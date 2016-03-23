@@ -1,5 +1,8 @@
 package mobimoney.za.co.mobimoney.navigationdraw;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,17 +15,25 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 
 import mobimoney.za.co.mobimoney.R;
+import mobimoney.za.co.mobimoney.home.view.HomeFragment;
+import mobimoney.za.co.mobimoney.transaction.sms.NewSmsTransactionFragment;
 
 public class DrawerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    Toolbar toolbar;
+    protected FrameLayout contentMain;
+    FragmentManager fragmentManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drawer);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        contentMain = (FrameLayout) findViewById(R.id.content_main);
+        fragmentManager = getFragmentManager();
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -42,6 +53,9 @@ public class DrawerActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        //setNewSmsFragment();
+        setHomeFragment();
     }
 
     @Override
@@ -82,22 +96,91 @@ public class DrawerActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if (id == R.id.nav_item_home) {
+            displayFragment(HomeFragment.class, getString(R.string.home_fragment), getString(R.string.title_home));
+        } else if (id == R.id.nav_item_expenses) {
 
-        } else if (id == R.id.nav_slideshow) {
+        } else if (id == R.id.nav_item_income) {
 
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.nav_item_transactions) {
+            displayFragment(NewSmsTransactionFragment.class, getString(R.string.new_sms_transaction_fragment) , getString(R.string.title_new_sms));
+        } else if (id == R.id.nav_item_budget) {
 
-        } else if (id == R.id.nav_share) {
+        } else if (id == R.id.nav_item_logout) {
 
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.nav_item_settings) {
+
+        } else if (id == R.id.nav_item_help) {
 
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void setHomeFragment() {
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        HomeFragment homeFragment =
+                (HomeFragment) fragmentManager.findFragmentByTag(getString(R.string.home_fragment));
+        contentMain.removeAllViews();
+        if (homeFragment == null) {
+            fragmentTransaction.add(R.id.content_main, new HomeFragment()
+                    , getString(R.string.home_fragment));
+            fragmentTransaction.commit();
+        } else {
+            fragmentTransaction.remove(homeFragment);
+            fragmentTransaction.add(R.id.content_main, homeFragment
+                    , getString(R.string.home_fragment));
+            fragmentTransaction.commit();
+        }
+    }
+
+    private void setNewSmsFragment() {
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        NewSmsTransactionFragment newSmsTransactionFragment =
+                (NewSmsTransactionFragment) fragmentManager.findFragmentByTag(getString(R.string.new_sms_transaction_fragment));
+
+
+        if (newSmsTransactionFragment == null) {
+            contentMain.removeAllViews();
+            fragmentTransaction.add(R.id.content_main, new NewSmsTransactionFragment(), getString(R.string.new_sms_transaction_fragment));
+            fragmentTransaction.commit();
+
+        } else if (!newSmsTransactionFragment.isVisible()) {
+            contentMain.removeAllViews();
+            fragmentTransaction.remove(newSmsTransactionFragment);
+            fragmentTransaction.commit();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.add(R.id.content_main, newSmsTransactionFragment, getString(R.string.new_sms_transaction_fragment));
+            transaction.commit();
+
+        }
+    }
+
+    protected <T extends Fragment> void displayFragment(Class<T> fragmentType, String tag, String title) {
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentManager.findFragmentByTag(getString(R.string.new_sms_transaction_fragment));
+
+        Fragment fragment = fragmentType.cast(fragmentManager.findFragmentByTag(tag));
+        setTitle(title);
+        try {
+            if (fragment == null) {
+                contentMain.removeAllViews();
+                fragmentTransaction.add(R.id.content_main, fragmentType.newInstance(), tag);
+                fragmentTransaction.commit();
+            } else if (!fragment.isVisible()) {
+                contentMain.removeAllViews();
+                fragmentTransaction.remove(fragment);
+                fragmentTransaction.commit();
+                FragmentTransaction transaction = fragmentManager.beginTransaction();
+                transaction.add(R.id.content_main, fragmentType.newInstance(), tag);
+                transaction.commit();
+            }
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 }
